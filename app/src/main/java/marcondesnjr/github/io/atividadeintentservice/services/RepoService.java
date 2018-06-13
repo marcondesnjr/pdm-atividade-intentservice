@@ -14,6 +14,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import marcondesnjr.github.io.atividadeintentservice.entities.Repository;
 
 public class RepoService extends IntentService {
@@ -22,30 +28,34 @@ public class RepoService extends IntentService {
         super(name);
     }
 
+    public RepoService() {
+        super("DFT");
+    }
+
     @Override
     protected void onHandleIntent(@Nullable final Intent intent) {
         String usr = intent.getStringExtra("usr");
-        String url = "https://api.github.com/users/"+usr+"/repos";
-        Ion.with(getApplicationContext()).load(url).asString().setCallback(new FutureCallback<String>() {
-            @Override
-            public void onCompleted(Exception e, String result) {
-                try {
-                    JSONArray json = new JSONArray(result);
-                    Bundle b = new Bundle();
-                    for(int i = 0; i<json.length(); i++){
-                        JSONObject obj = json.getJSONObject(i);
-                        String nome = obj.getString("name");
-                        String autor = obj.getJSONObject("owner").getString("login");
-                        String autorImg = obj.getJSONObject("owner").getString("avatar_url");
-                        String desc = obj.getString("description");
-                        Repository repo = new Repository(autorImg,nome,autor,desc);
-                        b.putSerializable("repos", repo);
-                    }
-                }catch (JSONException ex){
-                    Log.e("app", "Could not parse malformed JSON: \"" + ex + "\"");
-                }
-            }
-        });
+        String urlStr = "https://api.github.com/users/"+usr+"/repos";
+        URL url = null;
+        String result = "";
+        try {
+            url = new URL(urlStr);
+
+        BufferedReader reader = null;
+
+            reader = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            result += line;
+        }
+        reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Log.i("APP", result);
+
+
     }
 
 
